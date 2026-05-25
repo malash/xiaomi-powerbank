@@ -20508,6 +20508,10 @@ function qs() {
 			},
 		},
 		children: /* @__PURE__ */ s.jsx(ct, {
+			basename: (() => {
+				const p = new URL(import.meta.url).pathname.replace(/\/assets\/[^/]+$/, "");
+				return p || "/";
+			})(),
 			children: /* @__PURE__ */ s.jsx(u.Suspense, {
 				fallback: /* @__PURE__ */ s.jsx("div", {
 					className: "loading-indicator",
