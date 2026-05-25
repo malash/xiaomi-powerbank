@@ -7368,7 +7368,7 @@ select:focus {
 	font-style: normal;
 	font-weight: 400;
 	font-display: block;
-	src: url(./assets/fa-brands-400-BP5tdqmh.woff2);
+	src: url(./fa-brands-400-BP5tdqmh.woff2);
 }
 .fa-brands,
 .fa-classic.fa-brands,
@@ -9072,7 +9072,7 @@ select:focus {
 	font-style: normal;
 	font-weight: 400;
 	font-display: block;
-	src: url(./assets/fa-regular-400-nyy7hhHF.woff2);
+	src: url(./fa-regular-400-nyy7hhHF.woff2);
 }
 .far {
 	--fa-family: var(--fa-family-classic);
@@ -9092,7 +9092,7 @@ select:focus {
 	font-style: normal;
 	font-weight: 900;
 	font-display: block;
-	src: url(./assets/fa-solid-900-DRAAbZTg.woff2);
+	src: url(./fa-solid-900-DRAAbZTg.woff2);
 }
 .fas {
 	--fa-style: 900;
@@ -9108,34 +9108,34 @@ select:focus {
 	font-family: "Font Awesome 5 Brands";
 	font-display: block;
 	font-weight: 400;
-	src: url(./assets/fa-brands-400-BP5tdqmh.woff2) format("woff2");
+	src: url(./fa-brands-400-BP5tdqmh.woff2) format("woff2");
 }
 @font-face {
 	font-family: "Font Awesome 5 Free";
 	font-display: block;
 	font-weight: 900;
-	src: url(./assets/fa-solid-900-DRAAbZTg.woff2) format("woff2");
+	src: url(./fa-solid-900-DRAAbZTg.woff2) format("woff2");
 }
 @font-face {
 	font-family: "Font Awesome 5 Free";
 	font-display: block;
 	font-weight: 400;
-	src: url(./assets/fa-regular-400-nyy7hhHF.woff2) format("woff2");
+	src: url(./fa-regular-400-nyy7hhHF.woff2) format("woff2");
 }
 @font-face {
 	font-family: FontAwesome;
 	font-display: block;
-	src: url(./assets/fa-solid-900-DRAAbZTg.woff2) format("woff2");
+	src: url(./fa-solid-900-DRAAbZTg.woff2) format("woff2");
 }
 @font-face {
 	font-family: FontAwesome;
 	font-display: block;
-	src: url(./assets/fa-brands-400-BP5tdqmh.woff2) format("woff2");
+	src: url(./fa-brands-400-BP5tdqmh.woff2) format("woff2");
 }
 @font-face {
 	font-family: FontAwesome;
 	font-display: block;
-	src: url(./assets/fa-regular-400-nyy7hhHF.woff2) format("woff2");
+	src: url(./fa-regular-400-nyy7hhHF.woff2) format("woff2");
 	unicode-range:
 		u+f003, u+f006, u+f014, u+f016-f017, u+f01a-f01b, u+f01d, u+f022, u+f03e,
 		u+f044, u+f046, u+f05c-f05d, u+f06e, u+f070, u+f087-f088, u+f08a, u+f094,
