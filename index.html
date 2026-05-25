@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+		/>
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta
+			name="apple-mobile-web-app-status-bar-style"
+			content="black-translucent"
+		/>
+		<meta name="format-detection" content="telephone=no" />
+		<meta name="theme-color" content="#2563eb" />
+		<title>小米移动电源详情</title>
+		<style>
+			:root {
+				--banner-height: 0px;
+			}
+			body {
+				padding-top: var(--banner-height) !important;
+			}
+			.fixed-header {
+				top: var(--banner-height) !important;
+			}
+		</style>
+		<script type="module" crossorigin src="./assets/index-DIuXkLo4.js"></script>
+		<link
+			rel="modulepreload"
+			crossorigin
+			href="./assets/react-vendor-tpvIM1oe.js"
+		/>
+		<link rel="stylesheet" crossorigin href="./assets/index-DZxvydNm.css" />
+	</head>
+	<body style="margin: 0">
+		<div
+			id="blue-banner"
+			style="
+				position: fixed;
+				top: 0px;
+				left: 0px;
+				width: 100%;
+				background: rgb(0, 122, 204);
+				color: white;
+				text-align: center;
+				padding: 8px 5px;
+				font-size: 12px;
+				z-index: 999999;
+				font-family: sans-serif;
+				box-sizing: border-box;
+			"
+		>
+			<div>
+				网页快照 - 抓取时间: 2026/5/22 20:06:28 | 原网址:
+				<a
+					href="https://powerbank.mieco.net/"
+					target="_blank"
+					style="color: white; text-decoration: underline"
+					>https://powerbank.mieco.net/</a
+				>
+			</div>
+			<div style="margin-top: 4px; font-weight: bold">
+				此快照版本修改了部分设备qi2.2开启和关闭功能的相关配置
+			</div>
+			<div
+				style="
+					color: #e2e8f0;
+					font-size: 10px;
+					margin-top: 4px;
+					line-height: 1.4;
+				"
+			>
+				仅供学习研究 不推荐任何非官方修改设备行为
+				qi2.2无线充电协议在中国大陆境内开启可能干扰航空器安全运行 属于违法行为
+				请勿在中国大陆境内/注册于中国大陆航司的航空器上开启或使用此功能
+				此功能仅可在qi2.2所使用的360khz合法的地区可使用及开启
+				在非法区域或非无线电屏蔽环境内禁止开启，如开启请立即重置充电宝或关闭此配置项
+				可能造成的安全和法律风险请自行承担
+				与网站所有人，镜像源站和设备所属公司无关
+			</div>
+		</div>
+
+		<div id="root"></div>
+
+		<script>
+			function adjustPadding() {
+				var banner = document.getElementById("blue-banner");
+				if (banner)
+					document.documentElement.style.setProperty(
+						"--banner-height",
+						banner.offsetHeight + "px",
+					);
+			}
+			window.addEventListener("load", adjustPadding);
+			window.addEventListener("resize", adjustPadding);
+			adjustPadding();
+			setInterval(adjustPadding, 500);
+
+			(function initMiecoHack() {
+				console.log(
+					"%c[MIECO 探针] 注入模块已挂载，开始Hook WebHID 通讯...",
+					"color: #8b5cf6; font-weight: bold;",
+				);
+				window.__mieco_qi2_enabled = false;
+				const hookedDevices = new WeakSet();
+
+				function calculateCRC8(dataArray) {
+					let t = 0;
+					for (let byte of dataArray) {
+						t ^= byte;
+						for (let i = 0; i < 8; i++) {
+							if (t & 128) t = (t << 1) ^ 7;
+							else t <<= 1;
+							t &= 255;
+						}
+					}
+					return t;
+				}
+
+				const originalSendReport = HIDDevice.prototype.sendReport;
+				HIDDevice.prototype.sendReport = async function (reportId, data) {
+					try {
+						const buffer = new Uint8Array(data.buffer || data);
+						if (buffer.length > 1 && buffer[0] === 0xa5) {
+							const cmd = buffer[1];
+							if (cmd === 0x06) {
+								console.log(
+									"%c[MIECO 探针] 拦截到网页发送 0x06 (控制指令)，将在 500ms 后自动追发 0x07 查询状态",
+									"color: #eab308; font-weight: bold;",
+								);
+								setTimeout(() => {
+									const frameData = [0xa5, 0x07, 0];
+									frameData.push(calculateCRC8(frameData));
+									const reqBuf = new Uint8Array(32);
+									reqBuf.set(frameData);
+									originalSendReport.call(this, 0, reqBuf);
+								}, 500);
+							} else if (cmd === 0x07) {
+								console.log(
+									"%c[MIECO 探针] 拦截到网页发送 0x07 (查询指令)，已准备好读取状态回调",
+									"color: #3b82f6;",
+								);
+							}
+						}
+					} catch (err) {
+						console.error(
+							"[MIECO 探针] 报文解析异常 (已旁路，不影响原业务):",
+							err,
+						);
+					}
+					return originalSendReport.apply(this, arguments);
+				};
+
+				function handleInputReport(e) {
+					const data = new Uint8Array(e.data.buffer);
+					if (data[0] !== 0xa5) return;
+					const cmd = data[1];
+
+					if (cmd === 0x17) {
+						const isSuccess = data[3] === 0;
+						const isEnabled = data[4] === 1;
+
+						if (isSuccess) {
+							window.__mieco_qi2_enabled = isEnabled;
+							console.log(
+								`%c[MIECO 探针] 收到 0x17 状态响应。当前 Qi2.2 为: ${isEnabled ? "开启" : "关闭"}`,
+								"color: #10b981; font-weight: bold;",
+							);
+
+							const card = document.getElementById("mieco-qi2-card");
+							if (card) {
+								card.style.display = isEnabled ? "flex" : "none";
+							}
+
+							if (isEnabled) {
+								const btn = document.getElementById("btn-disable-qi2");
+								if (btn) {
+									btn.innerText = "强制关闭";
+									btn.disabled = false;
+									btn.style.opacity = "1";
+								}
+							}
+						}
+					}
+
+					if (cmd === 0x16) {
+						const status = data[3];
+						const btn = document.getElementById("btn-disable-qi2");
+						if (status === 0) {
+							console.log("%c[MIECO 探针] 0x06 执行成功！", "color: #10b981");
+							if (btn) btn.innerText = "关闭成功";
+						}
+					}
+				}
+
+				setInterval(async () => {
+					if (!navigator.hid) return;
+					try {
+						const devices = await navigator.hid.getDevices();
+						for (const device of devices) {
+							if (device.opened && !hookedDevices.has(device)) {
+								hookedDevices.add(device);
+								device.addEventListener("inputreport", handleInputReport);
+								console.log(
+									"[MIECO 探针] 发现新设备，已建立旁路监听，发送初始 0x07 查询...",
+								);
+
+								const frameData = [0xa5, 0x07, 0];
+								frameData.push(calculateCRC8(frameData));
+								const reqBuf = new Uint8Array(32);
+								reqBuf.set(frameData);
+								originalSendReport.call(device, 0, reqBuf);
+							}
+						}
+					} catch (e) {}
+				}, 1500);
+
+				setInterval(async () => {
+					if (!navigator.hid) return;
+					try {
+						const devices = await navigator.hid.getDevices();
+						for (const device of devices) {
+							if (device.opened && hookedDevices.has(device)) {
+								const frameData = [0xa5, 0x07, 0];
+								frameData.push(calculateCRC8(frameData));
+								const reqBuf = new Uint8Array(32);
+								reqBuf.set(frameData);
+								originalSendReport.call(device, 0, reqBuf);
+							}
+						}
+					} catch (e) {}
+				}, 5000);
+
+				const qi2CardHTML =
+					'<div id="mieco-qi2-card" class="card p-8 flex justify-between items-center" style="display: none; margin-top: 16px; margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 16px; background: #fff; padding: 1.5rem 2rem; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); width: 100%; box-sizing: border-box; transition: opacity 0.3s ease;">' +
+					"<div>" +
+					'<h2 class="text-base font-bold text-gray-900 mb-1" style="margin: 0 0 0.25rem 0; font-size: 16px; font-weight: bold; color: #111827;">此设备已开启 QI 2.2 功能</h2>' +
+					'<p class="text-xs text-gray-500" style="margin: 0; font-size: 12px; color: #6b7280;">当前设备支持 25W 无线快充。如遇异常可点击右侧强制关闭。</p>' +
+					"</div>" +
+					'<div class="flex items-center space-x-3">' +
+					'<button id="btn-disable-qi2" class="text-white px-6 py-1.5 rounded text-sm font-medium border-none outline-none" style="background-color: #ff0000ff; color: white; border-radius: 16px; padding: 6px 24px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; outline: none;">强制关闭</button>' +
+					"</div>" +
+					"</div>";
+
+				const observer = new MutationObserver(() => {
+					const bodyText = document.body.innerText;
+					const isQi2Supported =
+						bodyText.includes("WPB1025S") || bodyText.includes("小米金沙江");
+					const existingCard = document.getElementById("mieco-qi2-card");
+
+					if (isQi2Supported && !existingCard) {
+						const cards = document.querySelectorAll(".card");
+						if (cards.length > 0) {
+							const lastCard = cards[cards.length - 1];
+							const tempWrapper = document.createElement("div");
+							tempWrapper.innerHTML = qi2CardHTML;
+							const newCard = tempWrapper.firstElementChild;
+
+							newCard.style.display = window.__mieco_qi2_enabled
+								? "flex"
+								: "none";
+							lastCard.parentNode.insertBefore(newCard, lastCard.nextSibling);
+
+							const btn = document.getElementById("btn-disable-qi2");
+							btn.addEventListener("click", async () => {
+								btn.innerText = "写入中...";
+								btn.style.opacity = "0.7";
+								btn.disabled = true;
+								try {
+									const devices = await navigator.hid.getDevices();
+									const device = devices.find((d) => d.opened);
+									if (device) {
+										const frameData = [0xa5, 0x06, 1, 0x00];
+										frameData.push(calculateCRC8(frameData));
+										const reqBuf = new Uint8Array(32);
+										reqBuf.set(frameData);
+
+										await device.sendReport(0, reqBuf);
+									}
+								} catch (e) {
+									btn.innerText = "发送失败";
+									setTimeout(() => {
+										btn.innerText = "强制关闭";
+										btn.disabled = false;
+										btn.style.opacity = "1";
+									}, 2000);
+								}
+							});
+						}
+					} else if (!isQi2Supported && existingCard) {
+						existingCard.remove();
+					}
+				});
+
+				observer.observe(document.body, { childList: true, subtree: true });
+			})();
+		</script>
+	</body>
+</html>
