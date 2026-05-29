@@ -37060,7 +37060,7 @@ const w$ =
 														}),
 														"不同型号移动电源的「指定USB-C口」不同。",
 														/* @__PURE__ */ nt.jsx("a", {
-															href: "/models",
+															href: "./models/",
 															target: "_blank",
 															rel: "noopener noreferrer",
 															className: "text-blue-500 ml-1",
